@@ -84,27 +84,7 @@ body {
 .maplibregl-ctrl-attrib {
   font-size: 11px;
 }
-.maplibregl-canvas/*
- * Tap targets: at least 44px on touch layouts (phones, tablets, coarse
- * pointers); desktop with a mouse keeps the denser 36px controls.
- */
-@utility tap {
-  min-height: 2.75rem;
-  @media (min-width: 64rem) and (pointer: fine) {
-    min-height: 2.25rem;
-  }
-}
-
-/* Horizontal scrollers that fade at the edges to show there's more. */
-@utility fade-x {
-  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 24px), transparent);
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-:focus-visible {
+.maplibregl-canvas:focus-visible {
   outline: 2px solid var(--color-sound-strong);
   outline-offset: -2px;
 }

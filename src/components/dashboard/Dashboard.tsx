@@ -52,11 +52,12 @@ export function Dashboard() {
         <FreshnessLine data={data} unavailable={Boolean(error) && !data} />
       </div>
 
-      <div className="z-20 -mx-4 bg-canvas/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:sticky lg:top-0">
+      <div className="sticky top-0 z-30 -mx-4 bg-canvas/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:top-14">
         <FilterBar
           filters={filters}
           today={today}
           facets={data?.facets ?? null}
+          matching={data?.totals.matching ?? null}
           onChange={setFilters}
           onClear={clearFilters}
           isDefault={isDefault}
