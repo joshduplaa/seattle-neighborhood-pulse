@@ -79,17 +79,17 @@ describe("RankedBars", () => {
 describe("buildMetrics", () => {
   it("derives every figure from the response", () => {
     const [total, avg, top, mapped] = buildMetrics(dashboard());
-    expect(total).toMatchObject({ value: "200", detail: "Oct 1 – Oct 10 · 10 days" });
+    expect(total).toMatchObject({ label: "Requests", value: "200", detail: "Oct 1 – Oct 10", title: "Requests reported Oct 1 – Oct 10 (10 days)" });
     expect(avg!.value).toBe("20.0");
-    expect(top).toMatchObject({ label: "Most reported type", value: "Graffiti", detail: "75.0% of requests in scope" });
-    expect(mapped).toMatchObject({ value: "95.0%", detail: "10 without usable coordinates" });
+    expect(top).toMatchObject({ label: "Top type", value: "Graffiti", detail: "75.0% of requests" });
+    expect(mapped).toMatchObject({ value: "95.0%", detail: "10 without location" });
   });
 
   it("describes the selected type and handles an empty scope", () => {
     const withCategory = buildMetrics(
       dashboard({ filters: { ...dashboard().filters, category: "Pothole" }, totals: { matching: 50, geolocated: 50, withoutArea: 0 } }),
     );
-    expect(withCategory[2]).toMatchObject({ label: "Selected request type", value: "Pothole", detail: "25.0% of requests in scope" });
+    expect(withCategory[2]).toMatchObject({ label: "Selected type", value: "Pothole", detail: "25.0% of requests" });
 
     const empty = buildMetrics(
       dashboard({ totals: { matching: 0, geolocated: 0, withoutArea: 0 }, facets: { category: [], status: [], area: [], district: [] } }),
@@ -151,6 +151,14 @@ describe("RecentRequests", () => {
     expect(screen.getAllByText("No map location")).toHaveLength(1);
     await userEvent.click(screen.getByRole("button", { name: /Pothole/ }));
     expect(onChoose).toHaveBeenCalledWith("26-2");
+  });
+
+  it("shows five rows on phones, then more on request", async () => {
+    const requests = Array.from({ length: 8 }, (_, i) => request(`26-${i}`));
+    render(<RecentRequests data={dashboard({ sample: { limit: 2000, requests, rejected: 0 } })} loading={false} selectedId={null} onChoose={() => {}} onClearFilters={() => {}} canClear={false} />);
+    expect(screen.getAllByRole("button", { name: /Graffiti/ })).toHaveLength(5);
+    await userEvent.click(screen.getByRole("button", { name: /Show 3 more/ }));
+    expect(screen.getAllByRole("button", { name: /Graffiti/ })).toHaveLength(8);
   });
 
   it("offers to clear filters when nothing matches", async () => {

@@ -14,6 +14,7 @@ import { TrendPanel } from "@/components/dashboard/TrendPanel";
 import { MapPanel } from "@/components/map/MapPanel";
 import type { MapFocus } from "@/components/map/MapView";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useFilterState } from "@/hooks/useFilterState";
 import { activeFacetCount } from "@/lib/filters";
 import type { AreaMeasure } from "@/lib/population";
@@ -32,30 +33,45 @@ export function Dashboard() {
   const selected = data?.sample.requests.find((r) => r.id === selectedId) ?? null;
   const activeId = selected?.id ?? null;
 
-  const chooseFromList = useCallback((id: string) => {
-    setSelectedId(id);
-    setFocus((f) => ({ id, nonce: (f?.nonce ?? 0) + 1 }));
-    detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
+  const wide = useMediaQuery("(min-width: 1024px)", true);
+  const requests = data?.sample.requests;
+
+  const chooseFromList = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      setFocus((f) => ({ id, nonce: (f?.nonce ?? 0) + 1 }));
+      // After the detail renders: on desktop bring the card into view; on
+      // phones the details open as a sheet, so show the map flying to it.
+      const mapped = Boolean(requests?.find((r) => r.id === id)?.coordinates);
+      requestAnimationFrame(() => {
+        if (wide) detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        else if (mapped) document.getElementById("map")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    },
+    [requests, wide],
+  );
+  const closeDetail = useCallback(() => setSelectedId(null), []);
 
   const firstLoad = !data;
 
   return (
-    <div className="flex flex-col gap-4 sm:gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-display text-[28px] font-semibold leading-tight text-ink sm:text-4xl">What Seattle is reporting</h1>
+    <div className="flex flex-col gap-6 lg:gap-8">
+      <div className="flex flex-col gap-1.5">
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-ink sm:text-4xl">What Seattle is reporting</h1>
         <p className="max-w-3xl text-[15px] leading-6 text-ink-muted">
-          Service requests residents file with the City — encampments, abandoned vehicles, illegal dumping, graffiti, potholes and more —
-          mapped and compared across neighborhoods.
+          Service requests residents file with the City
+          <span className="hidden sm:inline"> — encampments, abandoned vehicles, illegal dumping, graffiti, potholes and more —</span>
+          <span className="sm:hidden">,</span> mapped and compared across neighborhoods.
         </p>
         <FreshnessLine data={data} unavailable={Boolean(error) && !data} />
       </div>
 
-      <div className="z-20 -mx-4 bg-canvas/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:sticky lg:top-0">
+      <div className="sticky top-0 z-30 -mx-4 -my-2 bg-canvas/95 px-4 py-2 backdrop-blur-sm sm:-mx-6 sm:px-6 lg:top-14">
         <FilterBar
           filters={filters}
           today={today}
           facets={data?.facets ?? null}
+          matching={data?.totals.matching ?? null}
           onChange={setFilters}
           onClear={clearFilters}
           isDefault={isDefault}
@@ -94,7 +110,7 @@ export function Dashboard() {
         <>
         <SummaryMetrics data={data} loading={loading} />
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
           <MapPanel
             data={data}
             loading={loading}
@@ -105,8 +121,8 @@ export function Dashboard() {
             onSelect={setSelectedId}
             onSelectArea={(area) => setFilters({ area: filters.area === area ? null : area })}
           />
-          <div className="flex min-w-0 flex-col gap-4 sm:gap-5 lg:max-h-[calc(600px+68px)]">
-            <RequestDetail ref={detailRef} request={selected} onClose={() => setSelectedId(null)} />
+          <div className="flex min-w-0 flex-col gap-6 lg:max-h-[calc(600px+5.25rem)]">
+            {selected ? <RequestDetail ref={detailRef} request={selected} onClose={closeDetail} /> : null}
             <div className="min-h-0 lg:flex-1 lg:overflow-y-auto lg:rounded-xl">
               <RecentRequests
                 data={data}
@@ -120,12 +136,12 @@ export function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
+        <div className="grid grid-cols-1 gap-6 lg:gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
           <TrendPanel data={data} loading={loading} />
           <StatusPanel data={data} loading={loading} onChange={setFilters} />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-2">
           <CategoryPanel data={data} loading={loading} onChange={setFilters} />
           <AreaPanel data={data} loading={loading} onChange={setFilters} measure={measure} onMeasureChange={setMeasure} />
         </div>

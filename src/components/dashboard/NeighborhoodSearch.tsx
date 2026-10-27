@@ -13,13 +13,15 @@ interface NeighborhoodSearchProps {
   counts: FacetBucket[] | null;
   onChange: (area: string | null) => void;
   disabled?: boolean;
+  /** Keep the label for screen readers only (dense desktop bar). */
+  hideLabel?: boolean;
 }
 
 /**
  * Type-ahead neighborhood picker (ARIA 1.2 combobox with a listbox popup).
  * Matches area names and the smaller places listed inside each area.
  */
-export function NeighborhoodSearch({ value, counts, onChange, disabled = false }: NeighborhoodSearchProps) {
+export function NeighborhoodSearch({ value, counts, onChange, disabled = false, hideLabel = false }: NeighborhoodSearchProps) {
   const inputId = useId();
   const listId = useId();
   const listRef = useRef<HTMLUListElement>(null);
@@ -75,7 +77,7 @@ export function NeighborhoodSearch({ value, counts, onChange, disabled = false }
 
   return (
     <div className="relative flex min-w-0 flex-col gap-1">
-      <label htmlFor={inputId} className="text-xs font-medium text-ink-muted">
+      <label htmlFor={inputId} className={hideLabel ? "sr-only" : "text-xs font-medium text-ink-muted"}>
         Neighborhood
       </label>
       <div className="relative">
@@ -90,7 +92,7 @@ export function NeighborhoodSearch({ value, counts, onChange, disabled = false }
           autoComplete="off"
           spellCheck={false}
           disabled={disabled}
-          placeholder="All neighborhoods (type to search)"
+          placeholder={hideLabel ? "All neighborhoods (search)" : "All neighborhoods (type to search)"}
           value={text}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -103,7 +105,7 @@ export function NeighborhoodSearch({ value, counts, onChange, disabled = false }
           }}
           onBlur={close}
           onKeyDown={onKeyDown}
-          className="h-9 w-full min-w-0 rounded-md border border-line-strong bg-surface pl-2.5 pr-8 text-sm text-ink placeholder:text-ink-subtle hover:border-ink-subtle disabled:cursor-not-allowed disabled:opacity-60"
+          className="tap w-full min-w-0 rounded-md border border-line-strong bg-surface pl-2.5 pr-10 text-sm text-ink placeholder:text-ink-subtle hover:border-ink-subtle disabled:cursor-not-allowed disabled:opacity-60"
         />
         {value && !disabled ? (
           <button
@@ -114,7 +116,7 @@ export function NeighborhoodSearch({ value, counts, onChange, disabled = false }
               onChange(null);
               close();
             }}
-            className="absolute right-1 top-1/2 flex size-7 -translate-y-1/2 items-center justify-center rounded text-ink-subtle hover:bg-surface-muted hover:text-ink"
+            className="absolute right-0.5 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded text-ink-subtle hover:bg-surface-muted hover:text-ink"
           >
             <svg aria-hidden viewBox="0 0 16 16" className="size-3.5">
               <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
@@ -147,7 +149,7 @@ export function NeighborhoodSearch({ value, counts, onChange, disabled = false }
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => choose(r.area)}
                 onMouseMove={() => setActive(i)}
-                className={`flex cursor-pointer items-baseline justify-between gap-3 px-3 py-1.5 text-sm ${
+                className={`tap flex cursor-pointer items-center justify-between gap-3 px-3 py-1.5 text-sm ${
                   i === active ? "bg-sound-soft" : ""
                 } ${r.area === value ? "font-medium" : ""}`}
               >

@@ -9,9 +9,11 @@ import { Skeleton } from "@/components/ui/Panel";
 interface Metric {
   label: string;
   value: string;
+  /** One short secondary line. */
   detail: string;
+  /** Longer explanation, shown as a tooltip. */
   title?: string;
-  /** Text values (names) use a smaller face so they can wrap. */
+  /** Text values (names) use a smaller face so they can wrap to two lines. */
   text?: boolean;
   /** Change versus the previous equal-length period, with its date range. */
   change?: { change: Change; period: string };
@@ -31,7 +33,7 @@ export function buildMetrics(data: DashboardData): Metric[] {
 
   return [
     {
-      label: "Requests reported",
+      label: "Requests",
       value: formatCount(totals.matching),
       change: comparison
         ? (() => {
@@ -39,36 +41,39 @@ export function buildMetrics(data: DashboardData): Metric[] {
             return change ? { change, period: `${formatShortDate(comparison.start)} – ${formatShortDate(comparison.end)}` } : undefined;
           })()
         : undefined,
-      detail: `${range} · ${formatCount(days)} ${days === 1 ? "day" : "days"}`,
+      detail: range,
+      title: `Requests reported ${range} (${formatCount(days)} ${days === 1 ? "day" : "days"})`,
     },
     {
-      label: "Daily average",
+      label: "Per day",
       value: perDay >= 100 ? formatCount(Math.round(perDay)) : formatDecimal(perDay),
-      detail: "requests per day in range",
+      detail: "daily average",
     },
     {
-      label: filters.category ? "Selected request type" : "Most reported type",
+      label: filters.category ? "Selected type" : "Top type",
       value: top?.value ?? "—",
       text: true,
-      detail: top && categoryScope > 0 ? `${formatPercent(top.count / categoryScope)} of requests in scope` : "No requests in scope",
+      detail: top && categoryScope > 0 ? `${formatPercent(top.count / categoryScope)} of requests` : "No requests in scope",
     },
     {
-      label: "Mapped location",
+      label: "Mapped",
       value: totals.matching ? formatPercent(totals.geolocated / totals.matching) : "—",
-      detail: `${formatCount(Math.max(0, totals.matching - totals.geolocated))} without usable coordinates`,
+      detail: `${formatCount(Math.max(0, totals.matching - totals.geolocated))} without location`,
+      title: "Share of matching requests with usable Seattle coordinates",
     },
   ];
 }
 
 export function SummaryMetrics({ data, loading }: { data: DashboardData | null; loading: boolean }) {
+  const grid = "grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-line bg-line lg:grid-cols-4";
   if (!data) {
     return (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-busy={loading}>
+      <div className={grid} aria-busy={loading}>
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rounded-xl border border-line bg-surface px-4 py-3">
-            <Skeleton className="h-3 w-24" />
-            <Skeleton className="mt-3 h-7 w-20" />
-            <Skeleton className="mt-2 h-3 w-32" />
+          <div key={i} className="bg-surface px-4 py-3">
+            <Skeleton className="h-3 w-16" />
+            <Skeleton className="mt-2.5 h-7 w-20" />
+            <Skeleton className="mt-2 h-3 w-24" />
           </div>
         ))}
       </div>
@@ -76,31 +81,32 @@ export function SummaryMetrics({ data, loading }: { data: DashboardData | null; 
   }
 
   return (
-    <dl className={`grid grid-cols-2 gap-3 transition-opacity lg:grid-cols-4 ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
+    <dl className={`${grid} transition-opacity ${loading ? "opacity-60" : ""}`} aria-busy={loading}>
       {buildMetrics(data).map((m) => (
-        <div key={m.label} className="min-w-0 rounded-xl border border-line bg-surface px-4 py-3 shadow-[0_1px_2px_rgb(19_34_44/0.04)]">
+        <div key={m.label} className="flex min-w-0 flex-col bg-surface px-4 py-3 sm:px-5" title={m.title}>
           <dt className="text-xs font-medium text-ink-muted">{m.label}</dt>
-          <dd
-            className={`mt-1 font-display font-semibold text-ink ${
-              m.text ? "line-clamp-2 text-lg leading-6 sm:text-xl sm:leading-7" : "text-2xl leading-8 tabular-nums sm:text-[28px]"
-            }`}
-            title={m.title ?? m.value}
-          >
-            {m.value}
+          <dd className="mt-1 flex min-w-0 flex-wrap items-baseline gap-x-2">
+            <span
+              className={`min-w-0 font-display font-semibold text-ink ${
+                m.text ? "line-clamp-2 text-base leading-5 sm:text-lg sm:leading-6" : "text-2xl leading-8 tabular-nums sm:text-[28px]"
+              }`}
+              title={m.value}
+            >
+              {m.value}
+            </span>
+            {m.change ? (
+              <span className="whitespace-nowrap text-xs tabular-nums text-ink-muted" title={`${m.change.change.description} (${m.change.period})`}>
+                <span aria-hidden className="mr-0.5 text-[9px]">
+                  {CHANGE_ARROW[m.change.change.direction]}
+                </span>
+                <span aria-hidden>{m.change.change.text}</span>
+                <span className="sr-only">
+                  , {m.change.change.description} ({m.change.period})
+                </span>
+              </span>
+            ) : null}
           </dd>
-          <dd className="mt-0.5 text-xs leading-5 text-ink-subtle">{m.detail}</dd>
-          {m.change ? (
-            <dd className="text-xs leading-5 text-ink-muted">
-              <span aria-hidden className="mr-1 text-[9px]">
-                {CHANGE_ARROW[m.change.change.direction]}
-              </span>
-              <span className="sr-only">{m.change.change.description}</span>
-              <span aria-hidden className="font-medium tabular-nums text-ink">
-                {m.change.change.text}
-              </span>
-              <span> vs {m.change.period}</span>
-            </dd>
-          ) : null}
+          <dd className="mt-auto truncate pt-0.5 text-xs leading-5 text-ink-subtle">{m.detail}</dd>
         </div>
       ))}
     </dl>

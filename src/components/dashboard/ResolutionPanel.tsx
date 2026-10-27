@@ -1,6 +1,6 @@
 "use client";
 
-import { EmptyState, Panel, Skeleton } from "@/components/ui/Panel";
+import { Disclosure, EmptyState, Panel, Skeleton } from "@/components/ui/Panel";
 import { useResolutionData } from "@/hooks/useDashboardData";
 import { formatLongDate, formatShortDate } from "@/lib/dates";
 import type { DashboardFilters } from "@/lib/filters";
@@ -87,13 +87,48 @@ export function ResolutionPanel({ filters }: { filters: DashboardFilters }) {
 
           <p className={`mb-3 text-xs leading-5 ${data.window?.shifted ? "text-ink-muted" : "text-ink-subtle"}`}>{windowText(data.window)}</p>
 
+          {/* Phones: one row per type, without horizontal scrolling. */}
+          <ul aria-label="Share of requests closed within 7 and 30 days, and median days, by request type" className="divide-y divide-line/70 border-y border-line md:hidden">
+            {data.types.map((t) => {
+              const highlighted = tracked?.request === t.request;
+              const small = (h: 7 | 30) => t.horizons[h].cohort > 0 && t.horizons[h].cohort < MIN_RELIABLE_COHORT;
+              const share = (h: 7 | 30) => (t.horizons[h].cohort ? `${formatPercent(t.horizons[h].share)}${small(h) ? "*" : ""}` : "—");
+              return (
+                <li
+                  key={t.tracking}
+                  aria-current={highlighted ? "true" : undefined}
+                  className={`py-2.5 ${highlighted ? "bg-sound-soft" : ""} ${tracked && !highlighted ? "text-ink-subtle" : ""}`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 text-[13px] font-medium">{t.label}</span>
+                    <span className="shrink-0 text-xs tabular-nums text-ink-subtle">{t.cohort ? `${formatCount(t.cohort)} req.` : "—"}</span>
+                  </div>
+                  <dl className="mt-1 grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <dt className="text-ink-subtle">≤ 7 days</dt>
+                      <dd className="tabular-nums text-ink">{share(7)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-ink-subtle">≤ 30 days</dt>
+                      <dd className="tabular-nums text-ink">{share(30)}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-ink-subtle">Median</dt>
+                      <dd className="tabular-nums text-ink">{formatMedian(t.median)}</dd>
+                    </div>
+                  </dl>
+                </li>
+              );
+            })}
+          </ul>
+
           {/* Focusable so keyboard users can scroll the table on narrow screens. */}
           <div
             // relative: keeps screen-reader-only text inside the scroller.
-            className="relative -mx-4 overflow-x-auto sm:-mx-5"
+            className="relative -mx-4 hidden overflow-x-auto sm:-mx-6 md:block"
             tabIndex={0}
             role="region"
-            aria-label="Response times table (scrolls horizontally)"
+            aria-label="Response times table"
           >
             <table className="w-full min-w-[560px] border-collapse text-[13px]">
               <caption className="sr-only">
@@ -101,11 +136,11 @@ export function ResolutionPanel({ filters }: { filters: DashboardFilters }) {
               </caption>
               <thead>
                 <tr className="border-y border-line text-left text-xs text-ink-subtle">
-                  <th scope="col" className="px-4 py-2 font-medium sm:px-5">Request type</th>
+                  <th scope="col" className="px-4 py-2 font-medium sm:px-6">Request type</th>
                   <th scope="col" className="px-3 py-2 text-right font-medium">Requests</th>
                   <th scope="col" className="px-3 py-2 text-right font-medium">Closed within 7 days</th>
                   <th scope="col" className="px-3 py-2 text-right font-medium">Within 30 days</th>
-                  <th scope="col" className="px-4 py-2 text-right font-medium sm:px-5">Median time</th>
+                  <th scope="col" className="px-4 py-2 text-right font-medium sm:px-6">Median time</th>
                 </tr>
               </thead>
               <tbody>
@@ -117,13 +152,13 @@ export function ResolutionPanel({ filters }: { filters: DashboardFilters }) {
                       aria-current={highlighted ? "true" : undefined}
                       className={`border-b border-line/70 ${highlighted ? "bg-sound-soft" : ""} ${tracked && !highlighted ? "text-ink-subtle" : ""}`}
                     >
-                      <th scope="row" className="px-4 py-2 text-left font-medium sm:px-5">
+                      <th scope="row" className="px-4 py-2 text-left font-medium sm:px-6">
                         {t.label}
                       </th>
                       <td className="px-3 py-2 text-right tabular-nums text-ink-muted">{t.cohort ? formatCount(t.cohort) : "—"}</td>
                       <ShareCell stat={t.horizons[7]} />
                       <ShareCell stat={t.horizons[30]} />
-                      <td className="px-4 py-2 text-right tabular-nums sm:px-5">{formatMedian(t.median)}</td>
+                      <td className="px-4 py-2 text-right tabular-nums sm:px-6">{formatMedian(t.median)}</td>
                     </tr>
                   );
                 })}
@@ -131,19 +166,23 @@ export function ResolutionPanel({ filters }: { filters: DashboardFilters }) {
             </table>
           </div>
 
-          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-ink-subtle">
-            <li>
-              Every column describes the same requests, all old enough to judge, so recent requests can&apos;t make the City look faster or
-              slower. Requests never closed still count, as slower than 30 days.
-            </li>
-            <li>
-              &ldquo;Closed&rdquo; is the City&apos;s status, not proof of a fix. It includes duplicates, vehicles that couldn&apos;t be located or
-              had moved, and reports forwarded to another department or team.
-            </li>
-            <li>Dates are whole days, so &ldquo;Same day&rdquo; means closed on the day it was reported.</li>
-            {anySmall ? <li>* Fewer than {MIN_RELIABLE_COHORT} requests, so the percentage is unreliable.</li> : null}
-            {otherFilters ? <li>Neighborhood, district and status filters don&apos;t apply here; the tracking data doesn&apos;t include them.</li> : null}
-          </ul>
+          {anySmall ? <p className="mt-1.5 text-[11px] text-ink-subtle">* Fewer than {MIN_RELIABLE_COHORT} requests, so the percentage is unreliable.</p> : null}
+          {otherFilters ? (
+            <p className="mt-1.5 text-[11px] text-ink-subtle">Neighborhood, district and status filters don&apos;t apply here; the tracking data doesn&apos;t include them.</p>
+          ) : null}
+          <Disclosure summary="How this is measured" className="mt-2">
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                Every column describes the same requests, all old enough to judge, so recent requests can&apos;t make the City look faster or
+                slower. Requests never closed still count, as slower than 30 days.
+              </li>
+              <li>
+                &ldquo;Closed&rdquo; is the City&apos;s status, not proof of a fix. It includes duplicates, vehicles that couldn&apos;t be located or
+                had moved, and reports forwarded to another department or team.
+              </li>
+              <li>Dates are whole days, so &ldquo;Same day&rdquo; means closed on the day it was reported.</li>
+            </ul>
+          </Disclosure>
         </div>
       )}
     </Panel>

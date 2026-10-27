@@ -3,11 +3,13 @@
 import { useState } from "react";
 
 import { EmptyState, Panel, Skeleton } from "@/components/ui/Panel";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { formatLocalTimestamp } from "@/lib/dates";
 import { formatAreaName, formatCount } from "@/lib/format";
 import type { DashboardData } from "@/lib/types";
 
-const PAGE = 15;
+/** Rows shown at first, and added per "Show more": fewer on phones, where the list sits above the charts. */
+const PAGE = { narrow: 5, wide: 15 } as const;
 
 interface RecentRequestsProps {
   data: DashboardData | null;
@@ -19,10 +21,11 @@ interface RecentRequestsProps {
 }
 
 export function RecentRequests({ data, loading, selectedId, onChoose, onClearFilters, canClear }: RecentRequestsProps) {
+  const page = useMediaQuery("(min-width: 1024px)", true) ? PAGE.wide : PAGE.narrow;
   // Reset paging when the result set changes (keyed by the request that heads the list).
   const resetKey = data ? `${data.retrievedAt}|${data.sample.requests[0]?.id ?? ""}` : "";
-  const [paging, setPaging] = useState({ key: resetKey, visible: PAGE });
-  const visible = paging.key === resetKey ? paging.visible : PAGE;
+  const [paging, setPaging] = useState({ key: resetKey, visible: 0 });
+  const visible = paging.key === resetKey ? Math.max(paging.visible, page) : page;
 
   const requests = data?.sample.requests ?? [];
   const shown = requests.slice(0, visible);
@@ -35,7 +38,7 @@ export function RecentRequests({ data, loading, selectedId, onChoose, onClearFil
     : "Newest matching requests first.";
 
   return (
-    <Panel id="recent" title="Recent requests" description={description} bodyClassName="px-2 py-2">
+    <Panel id="recent" title="Recent requests" description={description} bodyClassName="px-2 pb-2 pt-2 sm:px-3">
       {!data ? (
         <ul className="flex flex-col gap-2 p-2" aria-busy>
           {Array.from({ length: 6 }, (_, i) => (
@@ -60,39 +63,40 @@ export function RecentRequests({ data, loading, selectedId, onChoose, onClearFil
           <ul className={`flex flex-col transition-opacity ${loading ? "opacity-60" : ""}`}>
             {shown.map((r) => {
               const selected = r.id === selectedId;
+              const place = r.area ? formatAreaName(r.area) : (r.address ?? "Location not recorded");
               return (
                 <li key={r.id}>
                   <button
                     type="button"
                     onClick={() => onChoose(r.id)}
                     aria-current={selected ? "true" : undefined}
-                    className={`grid w-full grid-cols-[auto_1fr] gap-x-2.5 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-muted ${
+                    className={`tap grid w-full grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-2.5 rounded-lg px-2 py-2 text-left transition-colors hover:bg-surface-muted ${
                       selected ? "bg-ferry-soft hover:bg-ferry-soft" : ""
                     }`}
                   >
                     <span
                       aria-hidden
-                      className={`mt-1.5 size-2.5 rounded-full ${
+                      className={`size-2 translate-y-[-1px] rounded-full ${
                         selected ? "bg-ferry" : r.coordinates ? "bg-sound" : "border border-ink-subtle bg-transparent"
                       }`}
                     />
-                    <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-medium leading-5 text-ink">{r.type}</span>
-                      <span className="block text-xs leading-5 text-ink-subtle">
-                        {formatLocalTimestamp(r.createdAt)}
-                        {" · "}
-                        {r.area ? formatAreaName(r.area) : r.address ?? "Location not recorded"}
+                    <span className="flex min-w-0 items-baseline gap-2">
+                      <span className="truncate text-[13px] font-medium leading-5 text-ink">{r.type}</span>
+                      <span className="ml-auto max-w-[45%] shrink-0 truncate text-xs leading-5 text-ink-muted" title={place}>
+                        {place}
                       </span>
-                      <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
-                        {r.status ? (
-                          <span className="rounded border border-line px-1.5 text-[11px] leading-4 text-ink-muted">{r.status}</span>
-                        ) : null}
-                        {!r.coordinates ? (
-                          <span className="rounded border border-dashed border-line-strong px-1.5 text-[11px] leading-4 text-ink-subtle">
-                            No map location
-                          </span>
-                        ) : null}
-                      </span>
+                    </span>
+                    <span className="col-start-2 flex min-w-0 items-center gap-1.5 text-xs leading-5 text-ink-subtle">
+                      <span className="truncate">{formatLocalTimestamp(r.createdAt)}</span>
+                      {r.status ? (
+                        <>
+                          <span aria-hidden>·</span>
+                          <span className="shrink-0">{r.status}</span>
+                        </>
+                      ) : null}
+                      {!r.coordinates ? (
+                        <span className="ml-auto shrink-0 rounded border border-dashed border-line-strong px-1 text-[11px] leading-4">No map location</span>
+                      ) : null}
                     </span>
                   </button>
                 </li>
@@ -100,13 +104,13 @@ export function RecentRequests({ data, loading, selectedId, onChoose, onClearFil
             })}
           </ul>
           {visible < requests.length ? (
-            <div className="border-t border-line px-2 pb-1 pt-2">
+            <div className="px-2 pt-1">
               <button
                 type="button"
-                onClick={() => setPaging({ key: resetKey, visible: visible + PAGE })}
-                className="h-9 w-full rounded-md text-sm font-medium text-sound-strong hover:bg-sound-soft"
+                onClick={() => setPaging({ key: resetKey, visible: visible + page })}
+                className="tap w-full rounded-lg text-sm font-medium text-sound-strong hover:bg-sound-soft"
               >
-                Show {Math.min(PAGE, requests.length - visible)} more
+                Show {Math.min(page, requests.length - visible)} more
                 <span className="text-ink-subtle"> · {formatCount(visible)} of {formatCount(requests.length)} shown</span>
               </button>
             </div>

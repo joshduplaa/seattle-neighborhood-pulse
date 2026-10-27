@@ -17,7 +17,8 @@ interface RankedBarsProps {
 /**
  * Horizontal ranked bars as semantic HTML. Each row is a button that toggles
  * the corresponding filter, so the chart doubles as a keyboard-friendly
- * control and long Seattle place/category names can wrap on small screens.
+ * control. Long Seattle place/category names stay on one line, truncated,
+ * with the full name in the tooltip and accessible name.
  * Bar length is relative to the largest bucket; the share column is of the
  * whole scope.
  */
@@ -27,7 +28,7 @@ export function RankedBars({ items, selected, onSelect, label, noun }: RankedBar
   const hasSelection = selected !== null;
 
   return (
-    <ul aria-label={label} className="flex flex-col gap-1">
+    <ul aria-label={label} className="flex flex-col gap-0.5">
       {items.map((item) => {
         const isSelected = !item.other && hasSelection && item.value === selected;
         const interactive = Boolean(onSelect) && !item.other && item.value !== null;
@@ -38,7 +39,9 @@ export function RankedBars({ items, selected, onSelect, label, noun }: RankedBar
         const content = (
           <>
             <span className="flex items-baseline justify-between gap-3">
-              <span className={`min-w-0 text-[13px] leading-5 ${isSelected ? "font-semibold text-ink" : "text-ink"} ${item.other ? "text-ink-subtle" : ""}`}>
+              <span
+                className={`min-w-0 truncate text-[13px] leading-5 ${isSelected ? "font-semibold text-ink" : "text-ink"} ${item.other ? "text-ink-subtle" : ""}`}
+              >
                 {item.label}
               </span>
               <span className="shrink-0 text-[13px] leading-5 tabular-nums text-ink-muted">
@@ -74,14 +77,16 @@ export function RankedBars({ items, selected, onSelect, label, noun }: RankedBar
                 onClick={() => onSelect?.(isSelected ? null : item.value)}
                 aria-pressed={isSelected}
                 title={isSelected ? `Remove ${noun} filter` : `Filter to ${item.label}`}
-                className={`block w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sound-soft/60 ${
+                className={`tap block w-full rounded-md px-2 py-1.5 text-left transition-colors hover:bg-sound-soft/60 ${
                   isSelected ? "bg-sound-soft" : ""
                 }`}
               >
                 {content}
               </button>
             ) : (
-              <div className="px-2 py-1.5">{content}</div>
+              <div className="px-2 py-1.5" title={item.label}>
+                {content}
+              </div>
             )}
           </li>
         );
