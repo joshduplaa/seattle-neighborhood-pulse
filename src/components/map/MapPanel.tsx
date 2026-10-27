@@ -78,8 +78,8 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
   );
 
   return (
-    <Panel id="map" title="Where requests are reported" description={description} bodyClassName="p-0">
-      <div className="relative h-[420px] overflow-hidden sm:h-[520px] lg:h-[600px]">
+    <Panel id="map" title="Where requests are reported" description={description} bodyClassName="pt-3">
+      <div className="relative h-[420px] overflow-hidden rounded-b-2xl sm:h-[520px] lg:h-[600px]">
         <MapView
           cells={cells}
           resolution={data?.grid.resolution ?? 0.005}

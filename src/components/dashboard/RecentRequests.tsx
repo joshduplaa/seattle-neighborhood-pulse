@@ -35,7 +35,7 @@ export function RecentRequests({ data, loading, selectedId, onChoose, onClearFil
     : "Newest matching requests first.";
 
   return (
-    <Panel id="recent" title="Recent requests" description={description} bodyClassName="px-2 py-2">
+    <Panel id="recent" title="Recent requests" description={description} bodyClassName="px-2 pb-2 pt-2 sm:px-3">
       {!data ? (
         <ul className="flex flex-col gap-2 p-2" aria-busy>
           {Array.from({ length: 6 }, (_, i) => (

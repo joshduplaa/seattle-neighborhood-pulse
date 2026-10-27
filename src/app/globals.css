@@ -44,6 +44,26 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
+/*
+ * Tap targets: at least 44px on touch layouts (phones, tablets, coarse
+ * pointers); desktop with a mouse keeps the denser 36px controls.
+ */
+@utility tap {
+  min-height: 2.75rem;
+  @media (min-width: 64rem) and (pointer: fine) {
+    min-height: 2.25rem;
+  }
+}
+
+/* Horizontal scrollers that fade at the edges to show there's more. */
+@utility fade-x {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :focus-visible {
   outline: 2px solid var(--color-sound-strong);
   outline-offset: 2px;
@@ -55,10 +75,36 @@ body {
   box-shadow: 0 1px 2px rgb(19 34 44 / 0.12) !important;
   border: 1px solid var(--color-line);
 }
+@media (pointer: coarse) {
+  .maplibregl-ctrl-group button {
+    width: 44px !important;
+    height: 44px !important;
+  }
+}
 .maplibregl-ctrl-attrib {
   font-size: 11px;
 }
-.maplibregl-canvas:focus-visible {
+.maplibregl-canvas/*
+ * Tap targets: at least 44px on touch layouts (phones, tablets, coarse
+ * pointers); desktop with a mouse keeps the denser 36px controls.
+ */
+@utility tap {
+  min-height: 2.75rem;
+  @media (min-width: 64rem) and (pointer: fine) {
+    min-height: 2.25rem;
+  }
+}
+
+/* Horizontal scrollers that fade at the edges to show there's more. */
+@utility fade-x {
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 24px), transparent);
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+:focus-visible {
   outline: 2px solid var(--color-sound-strong);
   outline-offset: -2px;
 }
