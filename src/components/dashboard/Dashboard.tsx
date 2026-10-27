@@ -42,11 +42,12 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col gap-4 sm:gap-5">
-      <div className="flex flex-col gap-1">
-        <h1 className="font-display text-[28px] font-semibold leading-tight text-ink sm:text-4xl">What Seattle is reporting</h1>
+      <div className="flex flex-col gap-1.5">
+        <h1 className="font-display text-[26px] font-semibold leading-tight text-ink sm:text-4xl">What Seattle is reporting</h1>
         <p className="max-w-3xl text-[15px] leading-6 text-ink-muted">
-          Service requests residents file with the City — encampments, abandoned vehicles, illegal dumping, graffiti, potholes and more —
-          mapped and compared across neighborhoods.
+          Service requests residents file with the City
+          <span className="hidden sm:inline"> — encampments, abandoned vehicles, illegal dumping, graffiti, potholes and more —</span>
+          <span className="sm:hidden">,</span> mapped and compared across neighborhoods.
         </p>
         <FreshnessLine data={data} unavailable={Boolean(error) && !data} />
       </div>

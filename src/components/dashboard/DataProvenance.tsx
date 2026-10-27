@@ -1,3 +1,7 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+
 import { formatInstantInSeattle, formatLocalTimestamp } from "@/lib/dates";
 import { formatCount } from "@/lib/format";
 import {
@@ -10,24 +14,53 @@ import {
 } from "@/lib/socrata/config";
 import type { DashboardData } from "@/lib/types";
 
-/** One-line freshness indicator shown under the page title. */
+/** "just now", "12m ago", "3h ago", "2d ago". */
+export function formatAgo(iso: string, nowMs: number): string {
+  const minutes = Math.max(0, Math.floor((nowMs - Date.parse(iso)) / 60_000));
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+// The current minute, as a store so render stays pure; 0 on the server.
+const subscribeMinute = (onChange: () => void) => {
+  const t = setInterval(onChange, 30_000);
+  return () => clearInterval(t);
+};
+const minuteSnapshot = () => Math.floor(Date.now() / 60_000);
+const serverMinute = () => 0;
+
+/** Short freshness line under the page title; full timestamps are in the tooltip and About. */
 export function FreshnessLine({ data, unavailable = false }: { data: DashboardData | null; unavailable?: boolean }) {
+  const minute = useSyncExternalStore(subscribeMinute, minuteSnapshot, serverMinute);
+  const updated = data?.sourceUpdatedAt ?? data?.retrievedAt ?? null;
+  const title = data
+    ? [
+        data.sourceUpdatedAt ? `Source updated ${formatInstantInSeattle(data.sourceUpdatedAt)}` : null,
+        `Retrieved ${formatInstantInSeattle(data.retrievedAt)}`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : undefined;
+
   return (
-    <p className="text-[13px] leading-5 text-ink-subtle">
-      Source:{" "}
+    <p className="text-[13px] leading-5 text-ink-subtle" title={title}>
+      Data:{" "}
       <a href={DATASET_PAGE_URL} className="font-medium text-sound-strong underline-offset-2 hover:underline" target="_blank" rel="noreferrer">
-        {DATASET_PUBLISHER} · {DATASET_NAME}
+        {DATASET_PUBLISHER}
       </a>
-      {data ? (
+      {updated && minute ? (
         <>
           {" · "}
-          {data.sourceUpdatedAt ? <>Source updated {formatInstantInSeattle(data.sourceUpdatedAt)} · </> : null}
-          Retrieved {formatInstantInSeattle(data.retrievedAt)}
+          {data?.sourceUpdatedAt ? "updated" : "retrieved"} {formatAgo(updated, minute * 60_000)}
+          {title ? <span className="sr-only"> ({title})</span> : null}
         </>
       ) : unavailable ? (
-        " · Data currently unavailable"
-      ) : (
-        " · Loading latest data…"
+        " · currently unavailable"
+      ) : data ? null : (
+        " · loading…"
       )}
     </p>
   );

@@ -1,19 +1,9 @@
 import { Suspense } from "react";
 
 import { Dashboard } from "@/components/dashboard/Dashboard";
+import { SiteNav } from "@/components/SiteNav";
 import { Skeleton } from "@/components/ui/Panel";
 import { DATASET_NAME, DATASET_PAGE_URL, DATASET_PUBLISHER } from "@/lib/socrata/config";
-
-const NAV = [
-  { href: "#map", label: "Map" },
-  { href: "#trends", label: "Trends" },
-  { href: "#categories", label: "Request types" },
-  { href: "#neighborhoods", label: "Neighborhoods" },
-  { href: "#response", label: "Response times" },
-  { href: "#equity", label: "Equity" },
-  { href: "#recent", label: "Recent" },
-  { href: "#about", label: "About the data" },
-];
 
 function Logo() {
   // Abstract mark: a pulse line over Puget Sound waves.
@@ -28,15 +18,11 @@ function Logo() {
 
 function DashboardFallback() {
   return (
-    <div className="flex flex-col gap-5" aria-busy aria-label="Loading dashboard">
+    <div className="flex flex-col gap-6" aria-busy aria-label="Loading dashboard">
       <Skeleton className="h-10 w-80 max-w-full" />
-      <Skeleton className="h-24 w-full rounded-xl" />
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-24 rounded-xl" />
-        ))}
-      </div>
-      <Skeleton className="h-[420px] w-full rounded-xl sm:h-[520px]" />
+      <Skeleton className="h-12 w-full rounded-xl" />
+      <Skeleton className="h-36 w-full rounded-2xl lg:h-20" />
+      <Skeleton className="h-[420px] w-full rounded-2xl sm:h-[520px]" />
     </div>
   );
 }
@@ -50,30 +36,20 @@ export default function Home() {
       >
         Skip to dashboard
       </a>
-      <header className="border-b border-line bg-surface">
-        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-x-6 gap-y-2 px-4 py-3 sm:px-6">
-          <a href="#main" className="flex items-center gap-2.5">
+      <header className="border-b border-line bg-surface lg:sticky lg:top-0 lg:z-40">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-1 px-4 pb-1 pt-3 sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-0">
+          <a href="#main" className="flex shrink-0 items-center gap-2.5">
             <Logo />
             <span className="leading-tight">
               <span className="block font-display text-[17px] font-semibold text-ink">Seattle Neighborhood Pulse</span>
-              <span className="block text-xs text-ink-subtle">Civic service requests, mapped</span>
+              <span className="hidden text-xs text-ink-subtle sm:block">Civic service requests, mapped</span>
             </span>
           </a>
-          <nav aria-label="Sections" className="-mx-2 overflow-x-auto">
-            <ul className="flex gap-1 whitespace-nowrap text-sm">
-              {NAV.map((item) => (
-                <li key={item.href}>
-                  <a href={item.href} className="block rounded-md px-2 py-1.5 text-ink-muted hover:bg-surface-muted hover:text-ink">
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <SiteNav />
         </div>
       </header>
 
-      <main id="main" className="mx-auto max-w-[1440px] px-4 py-6 sm:px-6 sm:py-8">
+      <main id="main" className="mx-auto max-w-[1440px] px-4 pb-10 pt-5 sm:px-6 sm:pt-8">
         <Suspense fallback={<DashboardFallback />}>
           <Dashboard />
         </Suspense>
