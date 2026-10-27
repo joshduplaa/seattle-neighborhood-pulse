@@ -22,7 +22,7 @@ const IDS = NAV.map((n) => n.id);
  * link for the section on screen is highlighted and kept in view.
  */
 export function SiteNav() {
-  const active = useActiveSection(IDS);
+  const { active, pin } = useActiveSection(IDS);
   const scroller = useRef<HTMLUListElement>(null);
 
   useEffect(() => {
@@ -44,6 +44,7 @@ export function SiteNav() {
               <a
                 href={`#${item.id}`}
                 data-section={item.id}
+                onClick={() => pin(item.id)}
                 aria-current={current ? "location" : undefined}
                 className={`tap flex items-center rounded-full px-3 transition-colors ${
                   current ? "bg-sound-soft font-medium text-sound-deep" : "text-ink-muted hover:bg-surface-muted hover:text-ink"
