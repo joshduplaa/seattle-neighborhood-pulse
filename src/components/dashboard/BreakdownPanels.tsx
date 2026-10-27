@@ -5,6 +5,7 @@ import { useState } from "react";
 import { RankedBars } from "@/components/charts/RankedBars";
 import { EmptyState, Panel, Skeleton } from "@/components/ui/Panel";
 import { Segmented } from "@/components/ui/Segmented";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { rankBuckets, type RankedBucket } from "@/lib/aggregate";
 import type { DashboardFilters } from "@/lib/filters";
 import { formatAreaName, formatCategory, formatCount, formatDecimal, formatDistrict, formatStatus } from "@/lib/format";
@@ -57,8 +58,16 @@ export function CategoryPanel({ data, loading, onChange }: BreakdownProps) {
   );
 }
 
+/** Statuses shown at first on phones; desktop shows the full list beside the trend chart. */
+const STATUS_LIMIT_NARROW = 5;
+
 export function StatusPanel({ data, loading, onChange }: BreakdownProps) {
   const selected = data?.filters.status ?? null;
+  const wide = useMediaQuery("(min-width: 1024px)", true);
+  const [expanded, setExpanded] = useState(false);
+  const total = data?.facets.status.length ?? 0;
+  const collapsible = !wide && total > STATUS_LIMIT_NARROW + 1;
+  const limit = collapsible && !expanded ? STATUS_LIMIT_NARROW : 10;
   return (
     <Panel
       id="status"
@@ -74,10 +83,20 @@ export function StatusPanel({ data, loading, onChange }: BreakdownProps) {
           <RankedBars
             label="Requests by current status"
             noun="status"
-            items={rankBuckets(data.facets.status, { limit: 10, selected, label: formatStatus })}
+            items={rankBuckets(data.facets.status, { limit, selected, label: formatStatus })}
             selected={selected}
             onSelect={(status) => onChange({ status })}
           />
+          {collapsible ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className="tap mt-1 rounded-md px-2 text-[13px] font-medium text-sound-strong hover:bg-sound-soft"
+            >
+              {expanded ? `Show top ${STATUS_LIMIT_NARROW}` : "Show all statuses"}
+            </button>
+          ) : null}
         </div>
       )}
     </Panel>
