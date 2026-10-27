@@ -38,7 +38,7 @@ export default function Home() {
       </a>
       <header className="border-b border-line bg-surface lg:sticky lg:top-0 lg:z-40">
         <div className="mx-auto flex max-w-[1440px] flex-col gap-1 px-4 pb-1 pt-3 sm:px-6 lg:h-14 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:py-0">
-          <a href="#main" className="flex shrink-0 items-center gap-2.5">
+          <a href="#main" className="tap flex shrink-0 items-center gap-2.5">
             <Logo />
             <span className="leading-tight">
               <span className="block font-display text-[17px] font-semibold text-ink">Seattle Neighborhood Pulse</span>

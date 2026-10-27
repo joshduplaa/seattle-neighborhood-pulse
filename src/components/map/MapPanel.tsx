@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 
 import { buildShading, EXCLUDED_COLOR, legendClasses } from "@/components/map/choropleth";
 import type { MapBackground, MapFocus } from "@/components/map/MapView";
-import { Panel } from "@/components/ui/Panel";
+import { Chevron, Panel } from "@/components/ui/Panel";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { formatCount, formatPercent } from "@/lib/format";
 import { LOW_POPULATION_THRESHOLD, type AreaMeasure } from "@/lib/population";
@@ -79,7 +79,7 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
 
   return (
     <Panel id="map" title="Where requests are reported" description={description} bodyClassName="pt-3">
-      <div className="relative h-[420px] overflow-hidden rounded-b-2xl sm:h-[520px] lg:h-[600px]">
+      <div className="relative h-[400px] overflow-hidden rounded-b-2xl sm:h-[520px] lg:h-[600px]">
         <MapView
           cells={cells}
           resolution={data?.grid.resolution ?? 0.005}
@@ -124,7 +124,7 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
             aria-expanded={layersOpen}
             aria-controls="map-layers-panel"
             onClick={() => setLayersChoice(!layersOpen)}
-            className="flex min-h-9 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left hover:bg-surface-muted"
+            className="tap flex w-full items-center justify-between gap-3 rounded-lg px-3 py-1.5 text-left hover:bg-surface-muted"
           >
             <span className="font-medium text-ink">
               Map layers
@@ -132,9 +132,7 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
                 <span className="font-normal text-ink-subtle"> · {BACKGROUNDS.find((b) => b.id === background)?.label}</span>
               )}
             </span>
-            <svg aria-hidden viewBox="0 0 16 16" className={`size-3.5 shrink-0 transition-transform ${layersOpen ? "" : "rotate-180"}`}>
-              <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <Chevron className={layersOpen ? "" : "rotate-180"} />
             <span className="sr-only">{layersOpen ? "Hide" : "Show"} map layers and legend</span>
           </button>
 
@@ -146,7 +144,7 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
                 {BACKGROUNDS.map((b) => (
                   <label
                     key={b.id}
-                    className={`cursor-pointer rounded px-2 py-0.5 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-sound-strong ${
+                    className={`tap flex cursor-pointer items-center rounded px-2.5 has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-sound-strong ${
                       background === b.id ? "bg-sound-strong font-medium text-white" : "hover:bg-sound-soft"
                     }`}
                   >
@@ -203,7 +201,7 @@ export function MapPanel({ data, loading, error, selectedId, focus, measure, onS
               </div>
             ) : null}
 
-            <label className="mt-2 flex cursor-pointer items-start gap-2 border-t border-line pt-2">
+            <label className="tap mt-2 flex cursor-pointer items-start gap-2 border-t border-line pt-2">
               <input
                 type="checkbox"
                 className="mt-0.5 accent-sound-strong"
