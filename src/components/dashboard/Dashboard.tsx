@@ -14,6 +14,7 @@ import { TrendPanel } from "@/components/dashboard/TrendPanel";
 import { MapPanel } from "@/components/map/MapPanel";
 import type { MapFocus } from "@/components/map/MapView";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { useFilterState } from "@/hooks/useFilterState";
 import { activeFacetCount } from "@/lib/filters";
 import type { AreaMeasure } from "@/lib/population";
@@ -32,11 +33,24 @@ export function Dashboard() {
   const selected = data?.sample.requests.find((r) => r.id === selectedId) ?? null;
   const activeId = selected?.id ?? null;
 
-  const chooseFromList = useCallback((id: string) => {
-    setSelectedId(id);
-    setFocus((f) => ({ id, nonce: (f?.nonce ?? 0) + 1 }));
-    detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
+  const wide = useMediaQuery("(min-width: 1024px)", true);
+  const requests = data?.sample.requests;
+
+  const chooseFromList = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      setFocus((f) => ({ id, nonce: (f?.nonce ?? 0) + 1 }));
+      // After the detail renders: on desktop bring the card into view; on
+      // phones the details open as a sheet, so show the map flying to it.
+      const mapped = Boolean(requests?.find((r) => r.id === id)?.coordinates);
+      requestAnimationFrame(() => {
+        if (wide) detailRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        else if (mapped) document.getElementById("map")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    },
+    [requests, wide],
+  );
+  const closeDetail = useCallback(() => setSelectedId(null), []);
 
   const firstLoad = !data;
 
@@ -108,7 +122,7 @@ export function Dashboard() {
             onSelectArea={(area) => setFilters({ area: filters.area === area ? null : area })}
           />
           <div className="flex min-w-0 flex-col gap-6 lg:max-h-[calc(600px+5.25rem)]">
-            <RequestDetail ref={detailRef} request={selected} onClose={() => setSelectedId(null)} />
+            {selected ? <RequestDetail ref={detailRef} request={selected} onClose={closeDetail} /> : null}
             <div className="min-h-0 lg:flex-1 lg:overflow-y-auto lg:rounded-xl">
               <RecentRequests
                 data={data}

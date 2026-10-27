@@ -153,6 +153,14 @@ describe("RecentRequests", () => {
     expect(onChoose).toHaveBeenCalledWith("26-2");
   });
 
+  it("shows five rows on phones, then more on request", async () => {
+    const requests = Array.from({ length: 8 }, (_, i) => request(`26-${i}`));
+    render(<RecentRequests data={dashboard({ sample: { limit: 2000, requests, rejected: 0 } })} loading={false} selectedId={null} onChoose={() => {}} onClearFilters={() => {}} canClear={false} />);
+    expect(screen.getAllByRole("button", { name: /Graffiti/ })).toHaveLength(5);
+    await userEvent.click(screen.getByRole("button", { name: /Show 3 more/ }));
+    expect(screen.getAllByRole("button", { name: /Graffiti/ })).toHaveLength(8);
+  });
+
   it("offers to clear filters when nothing matches", async () => {
     const onClear = vi.fn();
     const data = dashboard({ totals: { matching: 0, geolocated: 0, withoutArea: 0 } });
