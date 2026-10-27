@@ -79,17 +79,17 @@ describe("RankedBars", () => {
 describe("buildMetrics", () => {
   it("derives every figure from the response", () => {
     const [total, avg, top, mapped] = buildMetrics(dashboard());
-    expect(total).toMatchObject({ value: "200", detail: "Oct 1 – Oct 10 · 10 days" });
+    expect(total).toMatchObject({ label: "Requests", value: "200", detail: "Oct 1 – Oct 10", title: "Requests reported Oct 1 – Oct 10 (10 days)" });
     expect(avg!.value).toBe("20.0");
-    expect(top).toMatchObject({ label: "Most reported type", value: "Graffiti", detail: "75.0% of requests in scope" });
-    expect(mapped).toMatchObject({ value: "95.0%", detail: "10 without usable coordinates" });
+    expect(top).toMatchObject({ label: "Top type", value: "Graffiti", detail: "75.0% of requests" });
+    expect(mapped).toMatchObject({ value: "95.0%", detail: "10 without location" });
   });
 
   it("describes the selected type and handles an empty scope", () => {
     const withCategory = buildMetrics(
       dashboard({ filters: { ...dashboard().filters, category: "Pothole" }, totals: { matching: 50, geolocated: 50, withoutArea: 0 } }),
     );
-    expect(withCategory[2]).toMatchObject({ label: "Selected request type", value: "Pothole", detail: "25.0% of requests in scope" });
+    expect(withCategory[2]).toMatchObject({ label: "Selected type", value: "Pothole", detail: "25.0% of requests" });
 
     const empty = buildMetrics(
       dashboard({ totals: { matching: 0, geolocated: 0, withoutArea: 0 }, facets: { category: [], status: [], area: [], district: [] } }),
