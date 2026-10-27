@@ -22,7 +22,7 @@ export function Panel({ id, title, description, actions, children, className = "
           </h2>
           {description ? <p className="mt-0.5 text-[13px] leading-5 text-ink-subtle">{description}</p> : null}
         </div>
-        {actions ? <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2">{actions}</div> : null}
+        {actions ? <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:max-w-full">{actions}</div> : null}
       </header>
       <div className={bodyClassName || "px-4 pb-4 pt-3 sm:px-6 sm:pb-6"}>{children}</div>
     </section>

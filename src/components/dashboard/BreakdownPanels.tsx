@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { RankedBars } from "@/components/charts/RankedBars";
 import { EmptyState, Panel, Skeleton } from "@/components/ui/Panel";
+import { Segmented } from "@/components/ui/Segmented";
 import { rankBuckets, type RankedBucket } from "@/lib/aggregate";
 import type { DashboardFilters } from "@/lib/filters";
 import { formatAreaName, formatCategory, formatCount, formatDecimal, formatDistrict, formatStatus } from "@/lib/format";
@@ -85,42 +86,15 @@ export function StatusPanel({ data, loading, onChange }: BreakdownProps) {
 
 type AreaUnit = "area" | "district";
 
-const AREA_LIMIT = 12;
+const AREA_LIMIT = 10;
+
+/** One control for the unit and measure: neighborhoods by count or per resident, or council districts. */
+type AreaView = "count" | "rate" | "district";
 
 interface AreaPanelProps extends BreakdownProps {
   /** Shared with the map shading. */
   measure: AreaMeasure;
   onMeasureChange: (measure: AreaMeasure) => void;
-}
-
-function Toggle<T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: { id: T; label: string }[];
-  value: T;
-  onChange: (value: T) => void;
-}) {
-  return (
-    <div role="group" aria-label={label} className="inline-flex rounded-md border border-line-strong p-0.5">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          aria-pressed={value === o.id}
-          onClick={() => onChange(o.id)}
-          className={`h-7 rounded px-2.5 text-[13px] transition-colors ${
-            value === o.id ? "bg-sound-strong font-medium text-white" : "text-ink-muted hover:bg-sound-soft hover:text-ink"
-          }`}
-        >
-          {o.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 /** Attach the change versus the previous period to each named bucket. */
@@ -174,31 +148,25 @@ export function AreaPanel({ data, loading, onChange, measure, onMeasureChange }:
       title="Compare areas"
       description={description}
       actions={
-        <div className="flex flex-wrap gap-2">
-          <Toggle
-            label="Geographic unit"
-            value={unit}
-            onChange={(u) => {
-              setUnit(u);
-              setExpanded(false);
-            }}
-            options={[
-              { id: "area", label: "Neighborhoods" },
-              { id: "district", label: "Council districts" },
-            ]}
-          />
-          {unit === "area" ? (
-            <Toggle
-              label="Measure"
-              value={measure}
-              onChange={onMeasureChange}
-              options={[
-                { id: "count", label: "Requests" },
-                { id: "rate", label: "Per 1,000 residents" },
-              ]}
-            />
-          ) : null}
-        </div>
+        <Segmented<AreaView>
+          label="Compare"
+          value={unit === "district" ? "district" : measure}
+          onChange={(view) => {
+            setExpanded(false);
+            if (view === "district") {
+              setUnit("district");
+            } else {
+              setUnit("area");
+              onMeasureChange(view);
+            }
+          }}
+          className="w-full sm:w-auto"
+          options={[
+            { id: "count", label: "Neighborhoods", title: "Requests by neighborhood" },
+            { id: "rate", label: "Per 1,000", ariaLabel: "Neighborhoods per 1,000 residents", title: "Requests per 1,000 residents by neighborhood" },
+            { id: "district", label: "Districts", ariaLabel: "Council districts", title: "Requests by council district" },
+          ]}
+        />
       }
     >
       {!data ? (
@@ -229,9 +197,9 @@ export function AreaPanel({ data, loading, onChange, measure, onMeasureChange }:
               type="button"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
-              className="mt-2 h-8 rounded-md px-2 text-[13px] font-medium text-sound-strong hover:bg-sound-soft"
+              className="tap mt-1 rounded-md px-2 text-[13px] font-medium text-sound-strong hover:bg-sound-soft"
             >
-              {expanded ? "Show top 12" : `Show all ${listLength} neighborhoods`}
+              {expanded ? `Show top ${AREA_LIMIT}` : `Show all ${listLength} neighborhoods`}
             </button>
           ) : null}
 
@@ -245,8 +213,8 @@ export function AreaPanel({ data, loading, onChange, measure, onMeasureChange }:
               </p>
               <ul className="mt-1 grid grid-cols-1 gap-x-4 text-xs leading-5 text-ink-muted sm:grid-cols-2">
                 {lowPopulation.map((r) => (
-                  <li key={r.area} className="flex justify-between gap-2 tabular-nums">
-                    <button type="button" onClick={() => onChange({ area: selected === r.area ? null : r.area })} className="text-left hover:underline">
+                  <li key={r.area} className="flex items-center justify-between gap-2 tabular-nums">
+                    <button type="button" onClick={() => onChange({ area: selected === r.area ? null : r.area })} className="tap text-left hover:underline">
                       {formatAreaName(r.area)}
                     </button>
                     <span>
@@ -258,7 +226,7 @@ export function AreaPanel({ data, loading, onChange, measure, onMeasureChange }:
             </div>
           ) : null}
 
-          <p className="mt-3 border-t border-line pt-3 text-xs leading-5 text-ink-subtle">
+          <p className="mt-3 text-xs leading-5 text-ink-subtle">
             {perCapita
               ? "Rates divide requests in the selected period by 2020 Census residents. Requests come from residents, workers and visitors alike, so busy commercial areas still rank higher."
               : "Raw counts — not adjusted for population, area or foot traffic, so dense and commercial neighborhoods rank higher."}
